@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gistfs"
+version = "0.1.0"
+description = "Use GitHub Gists as a persistent key-value filesystem — ideal for AI agent memory"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "Hervé Mignot" },
+]
+keywords = ["github", "gist", "filesystem", "memory", "ai", "agent", "llm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "requests>=2.28",
+]
+
+[project.optional-dependencies]
+llamaindex = ["llama-index-core>=0.11"]
+langgraph = ["langgraph-checkpoint>=2.0"]
+all = ["gistfs[llamaindex,langgraph]"]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=1.0",
+    "python-dotenv>=1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/HerveMignot/gistfs"
+Repository = "https://github.com/HerveMignot/gistfs"
+Issues = "https://github.com/HerveMignot/gistfs/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
