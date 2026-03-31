@@ -47,9 +47,13 @@ class GistMemory:
         public: bool = False,
         token: str | None = None,
         default_collection: str | None = None,
+        encryption_key: str | None = None,
     ) -> GistMemory:
         """Create a new GitHub Gist and return a :class:`GistMemory` bound to it."""
-        gfs = GistFS.create(description=description, public=public, token=token)
+        gfs = GistFS.create(
+            description=description, public=public, token=token,
+            encryption_key=encryption_key,
+        )
         instance = cls.__new__(cls)
         instance.gfs = gfs
         instance.default_collection = default_collection or cls.DEFAULT_COLLECTION
@@ -61,8 +65,9 @@ class GistMemory:
         token: str | None = None,
         *,
         default_collection: str | None = None,
+        encryption_key: str | None = None,
     ) -> None:
-        self.gfs = GistFS(gist_id, token=token)
+        self.gfs = GistFS(gist_id, token=token, encryption_key=encryption_key)
         self.default_collection = default_collection or self.DEFAULT_COLLECTION
 
     # ── context manager ──────────────────────────────────────────────

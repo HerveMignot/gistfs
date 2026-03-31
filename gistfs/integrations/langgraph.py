@@ -65,17 +65,27 @@ class GistStore(BaseStore):
         *,
         public: bool = False,
         token: str | None = None,
+        encryption_key: str | None = None,
     ) -> GistStore:
         """Create a new gist and return a :class:`GistStore` bound to it."""
-        gfs = GistFS.create(description=description, public=public, token=token)
+        gfs = GistFS.create(
+            description=description, public=public, token=token,
+            encryption_key=encryption_key,
+        )
         instance = cls.__new__(cls)
         BaseStore.__init__(instance)
         instance._gfs = gfs
         return instance
 
-    def __init__(self, gist_id: str, token: str | None = None) -> None:
+    def __init__(
+        self,
+        gist_id: str,
+        token: str | None = None,
+        *,
+        encryption_key: str | None = None,
+    ) -> None:
         super().__init__()
-        self._gfs = GistFS(gist_id, token=token)
+        self._gfs = GistFS(gist_id, token=token, encryption_key=encryption_key)
         self._gfs.sync()
 
     # ── abstract method implementations ──────────────────────────────

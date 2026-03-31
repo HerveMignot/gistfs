@@ -40,10 +40,12 @@ class GistFS:
         token: str | None = None,
         *,
         auto_sync: bool = True,
+        encryption_key: str | None = None,
     ) -> None:
         self.gist_id = gist_id
         self.token = token or os.environ.get("GITHUB_TOKEN", "")
         self.auto_sync = auto_sync
+        self.encryption_key = encryption_key
         self._url = GITHUB_API_GISTS.format(gist_id=gist_id)
         self._cache: dict[str, Any] | None = None
 
@@ -57,6 +59,7 @@ class GistFS:
         public: bool = False,
         token: str | None = None,
         init_files: dict[str, Any] | None = None,
+        encryption_key: str | None = None,
     ) -> GistFS:
         """Create a new GitHub Gist and return a :class:`GistFS` bound to it.
 
@@ -85,12 +88,19 @@ class GistFS:
             )
 
         if init_files:
-            files_payload = {
-                fname: {"content": json.dumps(data, ensure_ascii=False, default=str)}
-                for fname, data in init_files.items()
-            }
+            files_payload = {}
+            for fname, data in init_files.items():
+                raw = json.dumps(data, ensure_ascii=False, default=str)
+                if encryption_key:
+                    from .crypto import encrypt
+                    raw = encrypt(raw, encryption_key)
+                files_payload[fname] = {"content": raw}
         else:
-            files_payload = {"_gistfs.json": {"content": "{}"}}
+            init_content = "{}"
+            if encryption_key:
+                from .crypto import encrypt
+                init_content = encrypt(init_content, encryption_key)
+            files_payload = {"_gistfs.json": {"content": init_content}}
 
         payload: dict[str, Any] = {
             "description": description,
@@ -105,7 +115,7 @@ class GistFS:
         resp.raise_for_status()
 
         gist_id = resp.json()["id"]
-        instance = cls(gist_id, token=resolved_token)
+        instance = cls(gist_id, token=resolved_token, encryption_key=encryption_key)
         instance.sync()
         return instance
 
@@ -128,10 +138,13 @@ class GistFS:
         gist = resp.json()
         self._cache = {}
         for fname, fdata in gist.get("files", {}).items():
+            raw = fdata["content"]
+            if self.encryption_key:
+                raw = self._decrypt(raw)
             try:
-                self._cache[fname] = json.loads(fdata["content"])
+                self._cache[fname] = json.loads(raw)
             except (json.JSONDecodeError, TypeError):
-                self._cache[fname] = fdata["content"]
+                self._cache[fname] = raw
 
     def read(self, filename: str) -> Any:
         """Read and return the parsed content of *filename*."""
@@ -144,6 +157,8 @@ class GistFS:
     def write(self, filename: str, data: Any) -> None:
         """Write *data* (JSON-serializable) to *filename* in the gist."""
         content = json.dumps(data, ensure_ascii=False, default=str)
+        if self.encryption_key:
+            content = self._encrypt(content)
         payload = {"files": {filename: {"content": content}}}
         resp = self._patch_request(payload)
         resp.raise_for_status()
@@ -202,6 +217,16 @@ class GistFS:
         return GistFile(self, filename, mode)
 
     # ── helpers ──────────────────────────────────────────────────────
+
+    def _encrypt(self, plaintext: str) -> str:
+        """Encrypt and base64-encode *plaintext*."""
+        from .crypto import encrypt
+        return encrypt(plaintext, self.encryption_key)
+
+    def _decrypt(self, ciphertext: str) -> str:
+        """Decode and decrypt *ciphertext*."""
+        from .crypto import decrypt
+        return decrypt(ciphertext, self.encryption_key)
 
     def _ensure_synced(self) -> None:
         if self._cache is None:
@@ -314,7 +339,10 @@ class GistFile(io.StringIO):
         content = self.getvalue()
         if not content:
             return
-        payload = {"files": {self._filename: {"content": content}}}
+        raw = content
+        if self._gfs.encryption_key:
+            raw = self._gfs._encrypt(raw)
+        payload = {"files": {self._filename: {"content": raw}}}
         resp = self._gfs._patch_request(payload)
         resp.raise_for_status()
         # Update cache

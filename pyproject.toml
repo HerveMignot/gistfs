@@ -30,9 +30,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+encryption = ["cryptography>=41.0"]
 llamaindex = ["llama-index-core>=0.11"]
 langgraph = ["langgraph-checkpoint>=2.0"]
-all = ["gistfs[llamaindex,langgraph]"]
+all = ["gistfs[encryption,llamaindex,langgraph]"]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=1.0",

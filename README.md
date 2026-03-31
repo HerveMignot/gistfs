@@ -91,6 +91,33 @@ store.put(("user", "prefs"), "theme", {"value": "dark"})
 item = store.get(("user", "prefs"), "theme")
 ```
 
+## Encryption
+
+Install with encryption support:
+
+```bash
+pip install gistfs[encryption]
+```
+
+File content is encrypted (Fernet) and base64-encoded before being sent to GitHub, and decrypted transparently on read. Pass an `encryption_key` to any class:
+
+```python
+from gistfs import GistFS, derive_key
+from gistfs.integrations.langgraph import GistStore
+
+# Derive a key from a password (store the salt for later reuse)
+key, salt = derive_key("mypassword", salt=b"gistfs-demo-salt")
+
+# GistFS — files are encrypted at rest in the gist
+with GistFS(gist_id="your_gist_id", encryption_key=key) as gfs:
+    gfs.write("secrets.json", {"api_key": "sk-123"})
+    assert gfs.read("secrets.json") == {"api_key": "sk-123"}
+
+# LangGraph store — same key, same transparent encryption
+store = GistStore(gist_id="your_gist_id", encryption_key=key)
+store.put(("user", "prefs"), "theme", {"value": "dark"})
+```
+
 ## Authentication
 
 Set the `GITHUB_TOKEN` environment variable with a GitHub personal access token that has `gist` scope. Read-only operations on public gists work without a token.

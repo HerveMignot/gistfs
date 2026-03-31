@@ -39,9 +39,13 @@ class GistKVStore(BaseKVStore):
         *,
         public: bool = False,
         token: str | None = None,
+        encryption_key: str | None = None,
     ) -> GistKVStore:
         """Create a new gist and return a :class:`GistKVStore` bound to it."""
-        mem = GistMemory.create(description=description, public=public, token=token)
+        mem = GistMemory.create(
+            description=description, public=public, token=token,
+            encryption_key=encryption_key,
+        )
         instance = cls.__new__(cls)
         instance._mem = mem
         return instance
@@ -50,8 +54,10 @@ class GistKVStore(BaseKVStore):
         self,
         gist_id: str,
         token: str | None = None,
+        *,
+        encryption_key: str | None = None,
     ) -> None:
-        self._mem = GistMemory(gist_id, token=token)
+        self._mem = GistMemory(gist_id, token=token, encryption_key=encryption_key)
         self._mem.gfs.sync()
 
     # ── sync methods ─────────────────────────────────────────────────
