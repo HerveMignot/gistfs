@@ -45,6 +45,20 @@ with GistFS(gist_id="your_gist_id") as gfs:
     gfs.delete("config.json")
 ```
 
+### File-like interface
+
+```python
+with GistFS(gist_id="your_gist_id") as gfs:
+    with gfs.open("notes.txt", "w") as f:
+        f.write("hello world")
+
+    with gfs.open("notes.txt", "r") as f:
+        content = f.read()
+
+    with gfs.open("notes.txt", "a") as f:
+        f.write("\nappended line")
+```
+
 ### As AI agent memory
 
 ```python
