@@ -13,14 +13,7 @@ class TestGistMemoryCreate:
         assert mem.gfs.gist_id
         assert isinstance(mem, GistMemory)
         # Cleanup
-        import requests
-        requests.delete(
-            f"https://api.github.com/gists/{mem.gfs.gist_id}",
-            headers={
-                "Authorization": f"Bearer {github_token}",
-                "Accept": "application/vnd.github+json",
-            },
-        )
+        mem.gfs.delete_gist()
 
 
 class TestGistMemoryPutGet:

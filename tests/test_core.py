@@ -15,14 +15,7 @@ class TestGistFSCreate:
         # Has the seed file
         assert "_gistfs.json" in gfs.list_files()
         # Cleanup
-        import requests
-        requests.delete(
-            f"https://api.github.com/gists/{gfs.gist_id}",
-            headers={
-                "Authorization": f"Bearer {github_token}",
-                "Accept": "application/vnd.github+json",
-            },
-        )
+        gfs.delete_gist()
 
     def test_create_with_init_files(self, github_token):
         """create() seeds the gist with provided files."""
@@ -34,14 +27,7 @@ class TestGistFSCreate:
         assert "config.json" in gfs.list_files()
         assert gfs.read("config.json") == {"version": 1}
         # Cleanup
-        import requests
-        requests.delete(
-            f"https://api.github.com/gists/{gfs.gist_id}",
-            headers={
-                "Authorization": f"Bearer {github_token}",
-                "Accept": "application/vnd.github+json",
-            },
-        )
+        gfs.delete_gist()
 
 
 class TestGistFSReadWrite:

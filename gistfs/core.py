@@ -180,6 +180,17 @@ class GistFS:
         self._cache.pop(filename, None)
         return True
 
+    def delete_gist(self) -> None:
+        """Delete the entire gist from GitHub and invalidate this instance."""
+        if not self.token:
+            raise ValueError(
+                "A GitHub token is required to delete a gist. "
+                "Set GITHUB_TOKEN or pass token= to GistFS()."
+            )
+        resp = requests.delete(self._url, headers=self._headers())
+        resp.raise_for_status()
+        self._cache = None
+
     def list_files(self) -> list[str]:
         """Return a list of filenames in the gist."""
         self._ensure_synced()

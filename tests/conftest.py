@@ -30,16 +30,8 @@ def test_gist(github_token):
         token=github_token,
     )
     yield gfs
-    # Cleanup: delete the gist via the API
-    import requests
-
-    requests.delete(
-        f"https://api.github.com/gists/{gfs.gist_id}",
-        headers={
-            "Authorization": f"Bearer {github_token}",
-            "Accept": "application/vnd.github+json",
-        },
-    )
+    # Cleanup
+    gfs.delete_gist()
 
 
 @pytest.fixture()
