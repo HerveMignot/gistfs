@@ -10,4 +10,4 @@ try:
     __all__ += ["generate_key", "derive_key"]
 except ImportError:
     pass
-__version__ = "0.2.0"
+__version__ = "0.3.0"
