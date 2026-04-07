@@ -1,15 +1,37 @@
-"""Encryption helpers for GistFS — Fernet symmetric encryption with base64 encoding."""
+"""Encryption helpers for GistFS — Fernet symmetric encryption with base64 encoding.
+
+Requires the ``cryptography`` package::
+
+    pip install gistfs[encryption]
+"""
 
 from __future__ import annotations
 
 import base64
 import os
 
-from cryptography.fernet import Fernet
+
+def _get_fernet(key: str):
+    """Return a Fernet instance, raising a helpful error if cryptography is missing."""
+    try:
+        from cryptography.fernet import Fernet
+    except ImportError:
+        raise ImportError(
+            "The 'cryptography' package is required for encryption. "
+            "Install it with: pip install gistfs[encryption]"
+        ) from None
+    return Fernet(key.encode())
 
 
 def generate_key() -> str:
     """Generate a new Fernet encryption key and return it as a URL-safe base64 string."""
+    try:
+        from cryptography.fernet import Fernet
+    except ImportError:
+        raise ImportError(
+            "The 'cryptography' package is required for encryption. "
+            "Install it with: pip install gistfs[encryption]"
+        ) from None
     return Fernet.generate_key().decode()
 
 
@@ -19,8 +41,14 @@ def derive_key(passphrase: str, salt: bytes | None = None) -> tuple[str, bytes]:
     Returns ``(key, salt)`` — store the salt alongside the key so you can
     re-derive later with the same passphrase.
     """
-    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-    from cryptography.hazmat.primitives import hashes
+    try:
+        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+        from cryptography.hazmat.primitives import hashes
+    except ImportError:
+        raise ImportError(
+            "The 'cryptography' package is required for encryption. "
+            "Install it with: pip install gistfs[encryption]"
+        ) from None
 
     if salt is None:
         salt = os.urandom(16)
@@ -36,11 +64,11 @@ def derive_key(passphrase: str, salt: bytes | None = None) -> tuple[str, bytes]:
 
 def encrypt(plaintext: str, key: str) -> str:
     """Encrypt *plaintext* and return a base64-encoded ciphertext string."""
-    f = Fernet(key.encode())
+    f = _get_fernet(key)
     return base64.urlsafe_b64encode(f.encrypt(plaintext.encode())).decode()
 
 
 def decrypt(ciphertext: str, key: str) -> str:
     """Decrypt a base64-encoded *ciphertext* string back to plaintext."""
-    f = Fernet(key.encode())
+    f = _get_fernet(key)
     return f.decrypt(base64.urlsafe_b64decode(ciphertext.encode())).decode()
