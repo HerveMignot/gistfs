@@ -138,7 +138,16 @@ class GistFS:
         gist = resp.json()
         self._cache = {}
         for fname, fdata in gist.get("files", {}).items():
-            raw = fdata["content"]
+            if fdata.get("truncated"):
+                # Fetch full content for truncated files
+                file_url = fdata.get("raw_url")
+                if not file_url:
+                    raise EOFError(f"File {fname!r} is truncated but has no raw_url")
+                fresp = requests.get(file_url, headers=self._headers(auth=False))
+                fresp.raise_for_status()
+                raw = fresp.text
+            else:
+                raw = fdata["content"]
             if self.encryption_key:
                 raw = self._decrypt(raw)
             try:
